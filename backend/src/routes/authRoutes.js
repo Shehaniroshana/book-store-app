@@ -8,9 +8,42 @@ const generateToken=(id)=>{
 }
 
 
-router.get("/login", async (req, res) => {
+router.post("/login", async (req, res) => {
+   
+    try{
+
+        const {email,password}=req.body;
+
+        if(!email || !password){
+            return res.status(400).send({message:"All fields are required"})  
+        }
+
+        //check if user exists
+        const user=await User.findOne({email});
+        if(!user){
+            return res.status(400).send({message:"User does not exist"})  
+        }
+
+        //check if password is correct
+        const isPasswordCorrect=await user.comparePassword(password);
+        if(!isPasswordCorrect){
+            return res.status(400).send({message:"Password is incorrect"})  
+        }
+
+        const token=generateToken(user._id);
+        res.status(200).send({user:{
+         _id:user._id,
+         username:user.username,
+         email:user.email,
+         profileImage:user.profileImage
+        },token});
+
+    }catch(error){
+        console.log(error);
+        res.status(500).json({message:"Internal Server Error"});
+    }
     
-    res.send("login")
+   
 })
 
 router.post("/register", async (req, res) => {
